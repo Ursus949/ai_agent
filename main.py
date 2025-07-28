@@ -57,7 +57,7 @@ def generate_content(client, messages, verbose):
     except ClientError as e:
         print(f"\nError: {e}")
         if "RESOURCE_EXHAUSTED" in str(e):
-            retry_time = 15  # Default retry delay
+            retry_time = 15
             print(f"Rate limit hit. Retrying in {retry_time} seconds...")
             time.sleep(retry_time)
             return generate_content(client, messages, verbose)
@@ -77,38 +77,40 @@ def agent_loop(client, messages, verbose):
             print(response.text)
             break
 
-        for function_call in response.function_calls:
-            messages.append(
-                types.Content(
-                    role="model",
-                    parts=[
-                        types.Part.from_function_call(
-                            name=function_call.name,
-                            args=function_call.args,
-                        )
-                    ],
+        if response.function_calls:
+            for function_call in response.function_calls:
+                messages.append(
+                    types.Content(
+                        role="model",
+                        parts=[
+                            types.Part.from_function_call(
+                                name=function_call.name,
+                                args=function_call.args,
+                            )
+                        ],
+                    )
                 )
-            )
 
-            function_result = call_function(function_call, verbose=verbose)
+                function_result = call_function(function_call, verbose=verbose)
 
-            if (
-                not function_result.parts
-                or not hasattr(function_result.parts[0], "function_response")
-                or not function_result.parts[0].function_response
-            ):
-                raise RuntimeError("Fatal error: No function response from tool")
+                if (
+                    not function_result.parts
+                    or not hasattr(function_result.parts[0], "function_response")
+                    or not function_result.parts[0].function_response
+                ):
+                    raise RuntimeError("Fatal error: No function response from tool")
 
-            output = function_result.parts[0].function_response.response.get("result") \
-                     or str(function_result.parts[0].function_response.response)
+                output = function_result.parts[0].function_response.response.get("result") \
+                         or str(function_result.parts[0].function_response.response)
 
-            if verbose:
-                print("->", output)
+                if verbose:
+                    print("->", output)
 
-            print("\nTool Response:")
-            print(output)
+                print("\nTool Response:")
+                print(output)
 
-            messages.append(function_result)
+                if function_result.parts:
+                    messages.append(function_result)
     else:
         print("Stopping after 20 interaction rounds to avoid infinite loop.")
 

@@ -2,9 +2,9 @@
 
 def render(expression, result):
     if isinstance(result, float) and result.is_integer():
-        result_str = str(int(result))
-    else:
-        result_str = str(result)
+        result = int(result)
+
+    result_str = "{:,}".format(result)
 
     box_width = max(len(expression), len(result_str)) + 4
 
