@@ -6,21 +6,20 @@ from google.genai import types
 
 
 def main():
-
     load_dotenv()
 
-    args = sys.argv[1:]
-
-    verbose = False
-    if "--verbose" in args:
-        verbose = True
-        args.remove("--verbose")
+    verbose = "--verbose" in sys.argv
+    args = []
+    for arg in sys.argv[1:]:
+        if not arg.startswith("--"):
+            args.append(arg)
 
     if not args:
         print("AI Agent")
-        print('Usage: python3 main.py <"Your prompt here">')
+        print('Usage: python3 main.py <"Your prompt here"> [--verbose]')
         print('Example: python3 main.py "How do I clean a cast iron skillet?"')
         sys.exit(1)
+
     user_prompt = " ".join(args)
 
     if verbose:
@@ -33,6 +32,9 @@ def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
 
+    generate_content(client, messages, verbose)
+
+def generate_content(client, messages, verbose):
     response = client.models.generate_content(
         model='gemini-2.0-flash-001', contents=messages
     )

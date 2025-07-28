@@ -10,6 +10,7 @@ wheels/
 .python-version
 .env
 uv.lock
+backups/
 
 # Virtual environments
 .venv
